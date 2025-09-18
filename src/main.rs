@@ -77,6 +77,10 @@ fn qclass(buf: &[u8], pos: usize) {
     }
 }
 
+fn response() {
+    todo!("Implemntare una semplice logica di risposta");
+}
+
 fn main() -> std::io::Result<()> {
 
     {

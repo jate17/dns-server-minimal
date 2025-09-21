@@ -7,7 +7,3 @@ Fornendo i vari dati estratti dai vari offset
 
 é tutto molto basilare
 
-# TODO
-
-- Manca la risposta
-

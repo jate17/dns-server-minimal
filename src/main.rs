@@ -2,6 +2,7 @@ use std::net::UdpSocket;
 
 
 
+
 fn parse_header(buf: &[u8]) {
     let id = ((buf[0] as u16) << 8) | (buf[1] as u16);
     let flags = ((buf[2] as u16) << 8) | (buf[3] as u16);
@@ -31,7 +32,6 @@ fn qname(buf: &[u8]) -> usize{
 
         i += len;
     }
-
 
     if qname.ends_with('.') {
         qname.pop();
@@ -77,9 +77,24 @@ fn qclass(buf: &[u8], pos: usize) {
     }
 }
 
-fn response() {
-    todo!("Implemntare una semplice logica di risposta");
+fn response(buf_old: &[u8], pos: usize ) -> [u8; 512]{
+
+    let q_end = pos + 5;
+    let mut buf = [0u8; 512];
+    buf[0..(q_end)].copy_from_slice(&buf_old[0..(q_end)]);
+
+    buf[q_end..q_end+16].copy_from_slice(&[
+        0xC0, 0x0C,             // NAME (puntatore a QNAME)
+        0x00, 0x01,             // TYPE = A
+        0x00, 0x01,             // CLASS = IN
+        0x00, 0x00, 0x00, 0x3C, // TTL = 60
+        0x00, 0x04,             // RDLENGTH = 4
+        0x7F, 0x00, 0x00, 0x01, // RDATA = 127.0.0.1
+    ]);
+    buf
+
 }
+
 
 fn main() -> std::io::Result<()> {
 
@@ -87,16 +102,19 @@ fn main() -> std::io::Result<()> {
         let socket = UdpSocket::bind("127.0.0.1:53")?;
 
         let mut buf = [0u8;512];
+        let mut buf_t = [0u8;512];
 
         loop{
             let (amt, src) = socket.recv_from(&mut buf)?;
 
             println!("{amt} byte -> {src}");
             parse_header(&buf);
-
             let i = qname(&buf);
             qtype(&buf, i);
             qclass(&buf, i);
+            let buf_resp = response(&buf, i);
+            socket.send_to(&buf_resp, src)?;
         }
     }
 }
+
